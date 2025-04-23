@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +8,13 @@ function LoginPage() {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/success");
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,6 +29,10 @@ function LoginPage() {
     } catch (err) {
       setError("Ошибка входа. Проверьте логин и пароль.");
     }
+  };
+
+  const goToRegister = () => {
+    navigate("/register");
   };
 
   return (
@@ -47,6 +58,10 @@ function LoginPage() {
         <button type="submit">Войти</button>
       </form>
       {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <hr />
+      <p>Нет аккаунта?</p>
+      <button onClick={goToRegister}>Зарегистрироваться</button>
     </div>
   );
 }
