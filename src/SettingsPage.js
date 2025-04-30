@@ -14,6 +14,8 @@ function SettingsPage() {
       return;
     }
 
+    if (user) return;
+
     // Делаем запрос на бэкенд для получения данных о пользователе
     axios
       .get("http://localhost:8080/settings", {
@@ -46,6 +48,7 @@ function SettingsPage() {
         <p><strong>Логин:</strong> {user.login}</p>
         <p><strong>Роль:</strong> {user.role}</p>
         <p><strong>Корзина:</strong> {user.bucket ? user.bucket.name : "Нет корзины"}</p>
+        <p><strong>Используемое значение:</strong> {user.bucket ? user.bucket.size : "Error"}</p>
       </div>
     </div>
   );

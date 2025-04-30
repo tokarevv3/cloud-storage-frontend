@@ -3,6 +3,7 @@ import LoginPage from "./LoginPage";
 import SuccessPage from "./SuccessPage";
 import RegisterPage from "./RegisterPage";
 import SettingsPage from "./SettingsPage";
+import CloudPage from "./CloudPage";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/cloud/*" element={<CloudPage />} />
 
       </Routes>
     </Router>
