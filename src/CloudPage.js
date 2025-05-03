@@ -114,6 +114,24 @@ function CloudPage() {
       });
   };
 
+  const handleDelete = async (id, isFolder) => {
+    const token = localStorage.getItem("token");
+    const subPath = location.pathname.replace(/^\/cloud/, "") || "/";
+
+    if (!window.confirm("Вы действительно хотите удалить этот элемент?")) return;
+
+    try {
+      await axios.delete(`http://localhost:8080/api${subPath}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: isFolder ? { folderId: id } : { fileId: id },
+      });
+      loadData();
+    } catch (err) {
+      setError("Ошибка при удалении.");
+      console.error(err);
+    }
+  };
+
   const handleGoBack = () => {
     const currentPath = location.pathname.replace(/^\/cloud/, "") || "/";
     const parts = currentPath.split("/").filter(Boolean);
@@ -128,11 +146,9 @@ function CloudPage() {
 
   return (
     <div style={{ display: "flex", maxWidth: "1000px", margin: "50px auto" }}>
-      {/* Левая часть — список файлов */}
       <div style={{ flex: 1, paddingRight: "20px" }}>
         <h2>Содержимое облака</h2>
 
-        {/* Кнопка "Назад" */}
         <div style={{ marginBottom: "20px" }}>
           <button
             onClick={handleGoBack}
@@ -156,7 +172,6 @@ function CloudPage() {
           </button>
         </div>
 
-        {/* Загрузка файла */}
         <div style={{ marginBottom: "20px" }}>
           <label
             style={{
@@ -178,7 +193,6 @@ function CloudPage() {
           </label>
         </div>
 
-        {/* Создание папки */}
         <div style={{ marginBottom: "20px" }}>
           <input
             type="text"
@@ -192,7 +206,6 @@ function CloudPage() {
           </button>
         </div>
 
-        {/* Список файлов */}
         {data.length === 0 ? (
           <p>Папка пуста.</p>
         ) : (
@@ -205,17 +218,35 @@ function CloudPage() {
               const link = isFolder ? currentPath + name + "/" : `?fileId=${id}`;
 
               return (
-                <li key={id} style={{ marginBottom: "8px" }}>
+                <li
+                  key={id}
+                  style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                >
                   <Link
                     to={link}
                     style={{
                       textDecoration: "none",
-                      color: isFolder ? "#007bff" : "#333"
+                      color: isFolder ? "#007bff" : "#333",
+                      flexGrow: 1
                     }}
                   >
                     {isFolder ? "📁 " : "📄 "}
                     {name}
                   </Link>
+                  <button
+                    onClick={() => handleDelete(id, isFolder)}
+                    style={{
+                      marginLeft: "10px",
+                      backgroundColor: "#dc3545",
+                      color: "#fff",
+                      border: "none",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Удалить
+                  </button>
                 </li>
               );
             })}
@@ -223,7 +254,6 @@ function CloudPage() {
         )}
       </div>
 
-      {/* Правая часть — панель информации о файле */}
       {fileInfo && (
         <div
           style={{
@@ -246,12 +276,28 @@ function CloudPage() {
             <strong>Загружен:</strong>{" "}
             {new Date(fileInfo.uploadedAt).toLocaleString()}
           </p>
-          <button
-            onClick={handleDownload}
-            style={{ marginTop: "10px", padding: "6px 12px" }}
-          >
-            Скачать файл
-          </button>
+          <div>
+            <button
+              onClick={handleDownload}
+              style={{ marginTop: "10px", padding: "6px 12px" }}
+            >
+              Скачать файл
+            </button>
+            <button
+              onClick={() => handleDelete(fileInfo.id, false)}
+              style={{
+                marginTop: "10px",
+                marginLeft: "10px",
+                padding: "6px 12px",
+                backgroundColor: "#dc3545",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px"
+              }}
+            >
+              Удалить файл
+            </button>
+          </div>
         </div>
       )}
     </div>
