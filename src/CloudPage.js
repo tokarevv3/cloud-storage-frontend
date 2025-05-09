@@ -8,6 +8,10 @@ function CloudPage() {
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [moveTarget, setMoveTarget] = useState({ id: null, isFolder: false });
+  const [folderTree, setFolderTree] = useState([]);
+  const [selectedFolderId, setSelectedFolderId] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -135,10 +139,61 @@ function CloudPage() {
   const handleGoBack = () => {
     const currentPath = location.pathname.replace(/^\/cloud/, "") || "/";
     const parts = currentPath.split("/").filter(Boolean);
-    parts.pop(); // remove current folder
+    parts.pop();
     const parentPath = parts.length === 0 ? "/cloud" : `/cloud/${parts.join("/")}`;
     navigate(parentPath.endsWith("/") ? parentPath : parentPath + "/");
   };
+
+  const loadFolderTree = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await axios.get("http://localhost:8080/api/folder-tree", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFolderTree(res.data);
+    } catch (err) {
+      console.error("Ошибка при загрузке структуры папок", err);
+    }
+  };
+
+  const handleMove = async () => {
+    const token = localStorage.getItem("token");
+    const subPath = location.pathname.replace(/^\/cloud/, "") || "/";
+    if (!selectedFolderId || !moveTarget.id) return;
+
+    try {
+      await axios.patch(`http://localhost:8080/api${subPath}`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: moveTarget.isFolder
+          ? { folderId: moveTarget.id, newParentFolderId: selectedFolderId }
+          : { fileId: moveTarget.id, newParentFolderId: selectedFolderId },
+      });
+      setShowMoveModal(false);
+      loadData();
+    } catch (err) {
+      setError("Ошибка при перемещении.");
+      console.error(err);
+    }
+  };
+
+  const renderFolderTree = (nodes) => (
+    <ul style={{ listStyle: "none", paddingLeft: "20px" }}>
+      {nodes.map((node) => (
+        <li key={node.id}>
+          <label>
+            <input
+              type="radio"
+              name="destination"
+              value={node.id}
+              onChange={() => setSelectedFolderId(node.id)}
+            />
+            📁 {node.name}
+          </label>
+          {node.children?.length > 0 && renderFolderTree(node.children)}
+        </li>
+      ))}
+    </ul>
+  );
 
   if (error) {
     return <div style={{ color: "red", textAlign: "center" }}>{error}</div>;
@@ -247,6 +302,24 @@ function CloudPage() {
                   >
                     Удалить
                   </button>
+                  <button
+                    onClick={() => {
+                      setMoveTarget({ id, isFolder });
+                      loadFolderTree();
+                      setShowMoveModal(true);
+                    }}
+                    style={{
+                      marginLeft: "10px",
+                      backgroundColor: "#17a2b8",
+                      color: "#fff",
+                      border: "none",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Переместить
+                  </button>
                 </li>
               );
             })}
@@ -263,24 +336,12 @@ function CloudPage() {
           }}
         >
           <h3>Информация о файле</h3>
-          <p>
-            <strong>Имя:</strong> {fileInfo.fileName}
-          </p>
-          <p>
-            <strong>Путь:</strong> {fileInfo.filePath}
-          </p>
-          <p>
-            <strong>Размер:</strong> {fileInfo.fileSize}
-          </p>
-          <p>
-            <strong>Загружен:</strong>{" "}
-            {new Date(fileInfo.uploadedAt).toLocaleString()}
-          </p>
+          <p><strong>Имя:</strong> {fileInfo.fileName}</p>
+          <p><strong>Путь:</strong> {fileInfo.filePath}</p>
+          <p><strong>Размер:</strong> {fileInfo.fileSize}</p>
+          <p><strong>Загружен:</strong> {new Date(fileInfo.uploadedAt).toLocaleString()}</p>
           <div>
-            <button
-              onClick={handleDownload}
-              style={{ marginTop: "10px", padding: "6px 12px" }}
-            >
+            <button onClick={handleDownload} style={{ marginTop: "10px", padding: "6px 12px" }}>
               Скачать файл
             </button>
             <button
@@ -297,6 +358,40 @@ function CloudPage() {
             >
               Удалить файл
             </button>
+          </div>
+        </div>
+      )}
+
+      {showMoveModal && (
+        <div style={{
+          position: "fixed",
+          top: "0", left: "0", right: "0", bottom: "0",
+          backgroundColor: "rgba(0,0,0,0.5)",
+          display: "flex", justifyContent: "center", alignItems: "center",
+          zIndex: 999
+        }}>
+          <div style={{
+            backgroundColor: "#fff",
+            padding: "20px",
+            borderRadius: "8px",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            width: "400px"
+          }}>
+            <h3>Выберите папку назначения</h3>
+            {renderFolderTree(folderTree)}
+            <div style={{ marginTop: "20px" }}>
+              <button
+                onClick={handleMove}
+                disabled={!selectedFolderId}
+                style={{ marginRight: "10px", padding: "6px 12px" }}
+              >
+                Переместить
+              </button>
+              <button onClick={() => setShowMoveModal(false)} style={{ padding: "6px 12px" }}>
+                Отмена
+              </button>
+            </div>
           </div>
         </div>
       )}
