@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+import FilePreviewModal from './FilePreviewModal';
+
 
 function CloudPage() {
   const [data, setData] = useState([]);
@@ -14,6 +16,10 @@ function CloudPage() {
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+  const [filePreviewType, setFilePreviewType] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
 
   const loadData = () => {
     const token = localStorage.getItem("token");
@@ -48,6 +54,34 @@ function CloudPage() {
   useEffect(() => {
     loadData();
   }, [location]);
+
+
+  const handleFilePreview = (previewFileId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Токен не найден. Пожалуйста, войдите в систему.");
+      return;
+    }
+    axios
+      .get(`http://localhost:8080/api/preview`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { previewFileId },
+        responseType: "blob",
+      })
+      .then((res) => {
+        console.log(res);
+        const fileBlob = res.data; 
+        const fileUrl = URL.createObjectURL(fileBlob);
+        setFilePreviewUrl(fileUrl);
+        setFilePreviewType(res.headers["content-type"]);
+        setShowPreviewModal(true);
+        
+      })
+      .catch((err) => {
+        console.warn("Предпросмотр недоступен:", err);
+      });
+  };
+
 
   const handleFileUpload = async (event) => {
     const token = localStorage.getItem("token");
@@ -156,6 +190,14 @@ function CloudPage() {
     }
   };
 
+  const closeButt = async() => {
+    URL.revokeObjectURL(filePreviewUrl); // очищаем blob
+                setShowPreviewModal(false);
+                setFilePreviewUrl(null);
+                setFilePreviewType(null);
+            
+  };
+
   const handleMove = async () => {
     const token = localStorage.getItem("token");
     const subPath = location.pathname.replace(/^\/cloud/, "") || "/";
@@ -198,6 +240,23 @@ function CloudPage() {
   if (error) {
     return <div style={{ color: "red", textAlign: "center" }}>{error}</div>;
   }
+
+  // const renderPreviewContent = () => {
+  //   if (!filePreviewUrl || !filePreviewType) return null;
+
+  //   if (filePreviewType.startsWith("image/")) {
+  //     return <img src={filePreviewUrl} alt="preview" style={{ maxWidth: "100%" }} />;
+  //   } else if (filePreviewType.startsWith("text/")) {
+  //     return <iframe src={filePreviewUrl} title="text" style={{ width: "100%", height: "300px" }} />;
+  //   } else if (filePreviewType.startsWith("video/")) {
+  //     return <video src={filePreviewUrl} controls style={{ width: "100%" }} />;
+  //   } else if (filePreviewType.startsWith("audio/")) {
+  //     return <audio src={filePreviewUrl} controls style={{ width: "100%" }} />;
+  //   } else {
+  //     return <p>Тип файла не поддерживается для предпросмотра.</p>;
+  //   }
+  // };
+
 
   return (
     <div style={{ display: "flex", maxWidth: "1000px", margin: "50px auto" }}>
@@ -358,6 +417,15 @@ function CloudPage() {
             >
               Удалить файл
             </button>
+            <div>
+              <button onClick={() => handleFilePreview(fileInfo.id)}>Предпросмотр файла</button>
+              <FilePreviewModal
+                show={showPreviewModal}
+                onClose={closeButt}
+                filePreviewUrl={filePreviewUrl}
+                filePreviewType={filePreviewType}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -395,6 +463,10 @@ function CloudPage() {
           </div>
         </div>
       )}
+      {showPreviewModal }
+
+
+
     </div>
   );
 }
