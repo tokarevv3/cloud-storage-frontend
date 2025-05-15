@@ -21,35 +21,46 @@ function CloudPage() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
 
+  // Wildcard controller
   const loadData = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setError("Токен не найден. Пожалуйста, войдите в систему.");
       return;
     }
-
+  
     const subPath = location.pathname.replace(/^\/cloud/, "") || "/";
     const searchParams = new URLSearchParams(location.search);
     const fileId = searchParams.get("fileId");
-
-    axios
-      .get(`http://localhost:8080/api${subPath}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: fileId ? { fileId } : {},
-      })
-      .then((res) => {
-        if (fileId) {
+  
+    if (fileId) {
+      axios
+        .get(`http://localhost:8080/api/file/${fileId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then((res) => {
           setFileInfo(res.data);
-        } else {
+        })
+        .catch((err) => {
+          setError("Ошибка при получении информации о файле.");
+          console.error(err);
+        });
+    } else {
+      axios
+        .get(`http://localhost:8080/api${subPath}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then((res) => {
           setData(Object.entries(res.data));
           setFileInfo(null);
-        }
-      })
-      .catch((err) => {
-        setError("Ошибка при загрузке данных.");
-        console.error(err);
-      });
+        })
+        .catch((err) => {
+          setError("Ошибка при загрузке данных.");
+          console.error(err);
+        });
+    }
   };
+  
 
   useEffect(() => {
     loadData();
@@ -63,7 +74,7 @@ function CloudPage() {
       return;
     }
     axios
-      .get(`http://localhost:8080/api/preview`, {
+      .get(`http://localhost:8080/api/file/${previewFileId}/download`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { previewFileId },
         responseType: "blob",
@@ -82,7 +93,7 @@ function CloudPage() {
       });
   };
 
-
+  // Wildcard controller
   const handleFileUpload = async (event) => {
     const token = localStorage.getItem("token");
     const file = event.target.files[0];
@@ -109,6 +120,7 @@ function CloudPage() {
     }
   };
 
+  // wilcard controller
   const handleFolderCreate = async () => {
     if (!newFolderName.trim()) return;
     const token = localStorage.getItem("token");
@@ -127,12 +139,13 @@ function CloudPage() {
     }
   };
 
+
   const handleDownload = () => {
     const token = localStorage.getItem("token");
     const subPath = location.pathname.replace(/^\/cloud/, "") || "/";
 
     axios
-      .get(`http://localhost:8080/api${subPath}`, {
+      .get(`http://localhost:8080/api/file/${fileInfo.id}/download`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { downloadFileId: fileInfo.id },
         responseType: "blob",
@@ -154,14 +167,16 @@ function CloudPage() {
 
   const handleDelete = async (id, isFolder) => {
     const token = localStorage.getItem("token");
-    const subPath = location.pathname.replace(/^\/cloud/, "") || "/";
-
+  
     if (!window.confirm("Вы действительно хотите удалить этот элемент?")) return;
-
+  
+    const url = isFolder
+      ? `http://localhost:8080/api/folder/${id}/delete`
+      : `http://localhost:8080/api/file/${id}/delete`;
+  
     try {
-      await axios.delete(`http://localhost:8080/api${subPath}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: isFolder ? { folderId: id } : { fileId: id },
+      await axios.delete(url, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       loadData();
     } catch (err) {
@@ -169,6 +184,7 @@ function CloudPage() {
       console.error(err);
     }
   };
+  
 
   const handleGoBack = () => {
     const currentPath = location.pathname.replace(/^\/cloud/, "") || "/";
@@ -200,15 +216,16 @@ function CloudPage() {
 
   const handleMove = async () => {
     const token = localStorage.getItem("token");
-    const subPath = location.pathname.replace(/^\/cloud/, "") || "/";
     if (!selectedFolderId || !moveTarget.id) return;
-
+  
+    const url = moveTarget.isFolder
+      ? `http://localhost:8080/api/folder/${moveTarget.id}/move`
+      : `http://localhost:8080/api/file/${moveTarget.id}/move`;
+  
     try {
-      await axios.patch(`http://localhost:8080/api${subPath}`, null, {
+      await axios.patch(url, null, {
         headers: { Authorization: `Bearer ${token}` },
-        params: moveTarget.isFolder
-          ? { folderId: moveTarget.id, newParentFolderId: selectedFolderId }
-          : { fileId: moveTarget.id, newParentFolderId: selectedFolderId },
+        params: { newParentFolderId: selectedFolderId }
       });
       setShowMoveModal(false);
       loadData();
@@ -217,6 +234,7 @@ function CloudPage() {
       console.error(err);
     }
   };
+  
 
   const renderFolderTree = (nodes) => (
     <ul style={{ listStyle: "none", paddingLeft: "20px" }}>
@@ -240,23 +258,6 @@ function CloudPage() {
   if (error) {
     return <div style={{ color: "red", textAlign: "center" }}>{error}</div>;
   }
-
-  // const renderPreviewContent = () => {
-  //   if (!filePreviewUrl || !filePreviewType) return null;
-
-  //   if (filePreviewType.startsWith("image/")) {
-  //     return <img src={filePreviewUrl} alt="preview" style={{ maxWidth: "100%" }} />;
-  //   } else if (filePreviewType.startsWith("text/")) {
-  //     return <iframe src={filePreviewUrl} title="text" style={{ width: "100%", height: "300px" }} />;
-  //   } else if (filePreviewType.startsWith("video/")) {
-  //     return <video src={filePreviewUrl} controls style={{ width: "100%" }} />;
-  //   } else if (filePreviewType.startsWith("audio/")) {
-  //     return <audio src={filePreviewUrl} controls style={{ width: "100%" }} />;
-  //   } else {
-  //     return <p>Тип файла не поддерживается для предпросмотра.</p>;
-  //   }
-  // };
-
 
   return (
     <div style={{ display: "flex", maxWidth: "1000px", margin: "50px auto" }}>

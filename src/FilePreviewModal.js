@@ -33,7 +33,6 @@ const FilePreviewModal = ({ show, onClose, filePreviewUrl, filePreviewType }) =>
       return (
         <div>
           <h3>PDF файл:</h3>
-          {/* <iframe src={filePreviewUrl} width="100%" height="600px" title="PDF Viewer" /> */}
           <iframe src={filePreviewUrl} width="100%" height="600px" title="PDF Viewer" />
 
         </div>

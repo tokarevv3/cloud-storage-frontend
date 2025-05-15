@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
-  const [username, setUsername] = useState(""); 
+  const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -21,7 +21,7 @@ function LoginPage() {
     setError("");
     try {
       const response = await axios.post("http://localhost:8080/api/auth/login", {
-        username,  
+        email,  
         password,
       });
       localStorage.setItem("token", response.data.token);
@@ -42,8 +42,8 @@ function LoginPage() {
         <input
           type="text"
           placeholder="Логин"
-          value={username}  
-          onChange={(e) => setUsername(e.target.value)}  
+          value={email}  
+          onChange={(e) => setEmail(e.target.value)}  
           required
         />
         <br />

@@ -4,6 +4,7 @@ import SuccessPage from "./SuccessPage";
 import RegisterPage from "./RegisterPage";
 import SettingsPage from "./SettingsPage";
 import CloudPage from "./CloudPage";
+import AdminPage from "./AdminPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/cloud/*" element={<CloudPage />} />
+        <Route path="/admin" element={<AdminPage />} />
 
       </Routes>
     </Router>

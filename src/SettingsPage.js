@@ -18,7 +18,7 @@ function SettingsPage() {
 
     // Делаем запрос на бэкенд для получения данных о пользователе
     axios
-      .get("http://localhost:8080/settings", {
+      .get("http://localhost:8080/api/settings", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -44,10 +44,9 @@ function SettingsPage() {
     <div style={{ maxWidth: "500px", margin: "50px auto" }}>
       <h2>Информация о пользователе</h2>
       <div>
-        <p><strong>Имя пользователя:</strong> {user.username}</p>
-        <p><strong>Логин:</strong> {user.login}</p>
-        <p><strong>Роль:</strong> {user.role}</p>
-        <p><strong>Корзина:</strong> {user.bucket ? user.bucket.name : "Нет корзины"}</p>
+        <p><strong>Имя:</strong> {user.firstName}</p>
+        <p><strong>Фамилия:</strong> {user.lastName}</p>
+        <p><strong>Почта:</strong> {user.email}</p>
         <p><strong>Используемое значение:</strong> {user.bucket ? user.bucket.size : "Error"}</p>
       </div>
     </div>
