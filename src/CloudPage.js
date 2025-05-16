@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import FilePreviewModal from './FilePreviewModal';
 
 
@@ -28,11 +28,12 @@ function CloudPage() {
       setError("Токен не найден. Пожалуйста, войдите в систему.");
       return;
     }
-  
+
     const subPath = location.pathname.replace(/^\/cloud/, "") || "/";
     const searchParams = new URLSearchParams(location.search);
     const fileId = searchParams.get("fileId");
-  
+    const folderId = searchParams.get("folderId");
+
     if (fileId) {
       axios
         .get(`http://localhost:8080/api/file/${fileId}`, {
@@ -45,6 +46,19 @@ function CloudPage() {
           setError("Ошибка при получении информации о файле.");
           console.error(err);
         });
+    } else if (folderId) {
+      axios
+        .get(`http://localhost:8080/api/folder/${folderId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then((res) => {
+          setFileInfo(res.data);
+        })
+        .catch((err) => {
+          setError("Ошибка при получении информации о файле.");
+          console.error(err);
+        });
+
     } else {
       axios
         .get(`http://localhost:8080/api${subPath}`, {
@@ -60,7 +74,7 @@ function CloudPage() {
         });
     }
   };
-  
+
 
   useEffect(() => {
     loadData();
@@ -81,12 +95,12 @@ function CloudPage() {
       })
       .then((res) => {
         console.log(res);
-        const fileBlob = res.data; 
+        const fileBlob = res.data;
         const fileUrl = URL.createObjectURL(fileBlob);
         setFilePreviewUrl(fileUrl);
         setFilePreviewType(res.headers["content-type"]);
         setShowPreviewModal(true);
-        
+
       })
       .catch((err) => {
         console.warn("Предпросмотр недоступен:", err);
@@ -167,13 +181,13 @@ function CloudPage() {
 
   const handleDelete = async (id, isFolder) => {
     const token = localStorage.getItem("token");
-  
+
     if (!window.confirm("Вы действительно хотите удалить этот элемент?")) return;
-  
+
     const url = isFolder
       ? `http://localhost:8080/api/folder/${id}/delete`
       : `http://localhost:8080/api/file/${id}/delete`;
-  
+
     try {
       await axios.delete(url, {
         headers: { Authorization: `Bearer ${token}` }
@@ -184,7 +198,7 @@ function CloudPage() {
       console.error(err);
     }
   };
-  
+
 
   const handleGoBack = () => {
     const currentPath = location.pathname.replace(/^\/cloud/, "") || "/";
@@ -206,22 +220,22 @@ function CloudPage() {
     }
   };
 
-  const closeButt = async() => {
+  const closeButt = async () => {
     URL.revokeObjectURL(filePreviewUrl); // очищаем blob
-                setShowPreviewModal(false);
-                setFilePreviewUrl(null);
-                setFilePreviewType(null);
-            
+    setShowPreviewModal(false);
+    setFilePreviewUrl(null);
+    setFilePreviewType(null);
+
   };
 
   const handleMove = async () => {
     const token = localStorage.getItem("token");
     if (!selectedFolderId || !moveTarget.id) return;
-  
+
     const url = moveTarget.isFolder
       ? `http://localhost:8080/api/folder/${moveTarget.id}/move`
       : `http://localhost:8080/api/file/${moveTarget.id}/move`;
-  
+
     try {
       await axios.patch(url, null, {
         headers: { Authorization: `Bearer ${token}` },
@@ -234,7 +248,27 @@ function CloudPage() {
       console.error(err);
     }
   };
+
+  const handleRename = async (id, isFolder, newName) => {
+    const token = localStorage.getItem("token");
   
+    const url = isFolder
+      ? `http://localhost:8080/api/folder/${id}/rename`
+      : `http://localhost:8080/api/file/${id}/rename`;
+  
+    try {
+      await axios.patch(url, null, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {newName: newName }
+      });
+      loadData();
+    } catch (err) {
+      setError("Ошибка при переименовании.");
+      console.error(err);
+    }
+  };
+  
+
 
   const renderFolderTree = (nodes) => (
     <ul style={{ listStyle: "none", paddingLeft: "20px" }}>
@@ -330,56 +364,43 @@ function CloudPage() {
               const segments = path.split("/").filter(Boolean);
               const name = segments[segments.length - 1] || "/";
               const currentPath = location.pathname.endsWith("/") ? location.pathname : location.pathname + "/";
-              const link = isFolder ? currentPath + name + "/" : `?fileId=${id}`;
 
               return (
                 <li
                   key={id}
                   style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
                 >
-                  <Link
-                    to={link}
+                  <span
+                    onClick={() => {
+                      if (isFolder) {
+                        // Загрузка информации о папке
+                        navigate(`?folderId=${id}`);
+                        axios.get(`http://localhost:8080/api/folder/${id}`, {
+                          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                        })
+                          .then((res) => setFileInfo(res.data))
+                          .catch(() => setError("Ошибка при получении информации о папке."));
+                      } else {
+                        // Загрузка информации о файле
+                        navigate(`?fileId=${id}`);
+                      }
+                    }}
+                    onDoubleClick={() => {
+                      if (isFolder) {
+                        const newPath = (location.pathname.endsWith("/") ? location.pathname : location.pathname + "/") + name + "/";
+                        navigate(newPath);
+                      }
+                    }}
                     style={{
-                      textDecoration: "none",
+                      cursor: "pointer",
                       color: isFolder ? "#007bff" : "#333",
-                      flexGrow: 1
+                      flexGrow: 1,
+                      textDecoration: "underline"
                     }}
                   >
                     {isFolder ? "📁 " : "📄 "}
                     {name}
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(id, isFolder)}
-                    style={{
-                      marginLeft: "10px",
-                      backgroundColor: "#dc3545",
-                      color: "#fff",
-                      border: "none",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Удалить
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMoveTarget({ id, isFolder });
-                      loadFolderTree();
-                      setShowMoveModal(true);
-                    }}
-                    style={{
-                      marginLeft: "10px",
-                      backgroundColor: "#17a2b8",
-                      color: "#fff",
-                      border: "none",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Переместить
-                  </button>
+                  </span>
                 </li>
               );
             })}
@@ -395,41 +416,67 @@ function CloudPage() {
             paddingLeft: "20px"
           }}
         >
-          <h3>Информация о файле</h3>
-          <p><strong>Имя:</strong> {fileInfo.fileName}</p>
-          <p><strong>Путь:</strong> {fileInfo.filePath}</p>
-          <p><strong>Размер:</strong> {fileInfo.fileSize}</p>
-          <p><strong>Загружен:</strong> {new Date(fileInfo.uploadedAt).toLocaleString()}</p>
-          <div>
-            <button onClick={handleDownload} style={{ marginTop: "10px", padding: "6px 12px" }}>
-              Скачать файл
+          <h3>{"fileSize" in fileInfo ? "Информация о файле" : "Информация о папке"}</h3>
+
+          <p><strong>Имя:</strong> {fileInfo.fileName || fileInfo.folderName}</p>
+          <p><strong>Путь:</strong> {fileInfo.filePath || fileInfo.folderPath}</p>
+          <p><strong>Дата создания:</strong> {new Date(fileInfo.uploadedAt).toLocaleString()}</p>
+
+          {"fileSize" in fileInfo && (
+            <p><strong>Размер:</strong> {fileInfo.fileSize}</p>
+          )}
+
+          <div style={{ marginTop: "10px" }}>
+            {"fileSize" in fileInfo && (
+              <>
+                <button onClick={handleDownload} style={{ marginRight: "10px" }}>
+                  Скачать файл
+                </button>
+                <button onClick={() => handleFilePreview(fileInfo.id)} style={{ marginRight: "10px" }}>
+                  Предпросмотр
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => {
+                const newName = prompt("Введите новое имя:");
+                if (newName) handleRename(fileInfo.id, "fileSize" in fileInfo ? false : true, newName);
+              }}
+              style={{ marginRight: "10px" }}
+            >
+              Переименовать
             </button>
             <button
-              onClick={() => handleDelete(fileInfo.id, false)}
+              onClick={() => {
+                setMoveTarget({ id: fileInfo.id, isFolder: !"fileSize" in fileInfo });
+                loadFolderTree();
+                setShowMoveModal(true);
+              }}
+              style={{ backgroundColor: "#17a2b8", color: "#fff", marginRight: "10px" }}
+            >
+              Переместить
+            </button>
+            <button
+              onClick={() => handleDelete(fileInfo.id, !"fileSize" in fileInfo)}
               style={{
-                marginTop: "10px",
-                marginLeft: "10px",
-                padding: "6px 12px",
                 backgroundColor: "#dc3545",
-                color: "#fff",
-                border: "none",
-                borderRadius: "4px"
+                color: "#fff"
               }}
             >
-              Удалить файл
+              Удалить
             </button>
-            <div>
-              <button onClick={() => handleFilePreview(fileInfo.id)}>Предпросмотр файла</button>
-              <FilePreviewModal
-                show={showPreviewModal}
-                onClose={closeButt}
-                filePreviewUrl={filePreviewUrl}
-                filePreviewType={filePreviewType}
-              />
-            </div>
           </div>
+
+          <FilePreviewModal
+            show={showPreviewModal}
+            onClose={closeButt}
+            filePreviewUrl={filePreviewUrl}
+            filePreviewType={filePreviewType}
+          />
         </div>
       )}
+
+
 
       {showMoveModal && (
         <div style={{
@@ -464,7 +511,7 @@ function CloudPage() {
           </div>
         </div>
       )}
-      {showPreviewModal }
+      {showPreviewModal}
 
 
 
