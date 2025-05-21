@@ -1,0 +1,63 @@
+.register-background {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    height: 100vh;
+    background: url('Cloud\ Storage\ Background.png') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .register-container {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 340px;
+    color: #fff;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .register-container h2 {
+    color: #38ce3c;
+    margin-bottom: 20px;
+  }
+  
+  .register-container input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 16px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+  
+  .register-container input::placeholder {
+    color: #ddd;
+  }
+  
+  .register-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #38ce3c;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 8px;
+  }
+  
+  .register-container button:hover {
+    background-color: #2da82f;
+  }
+  
+  .register-container p {
+    margin-top: 10px;
+  }
+  

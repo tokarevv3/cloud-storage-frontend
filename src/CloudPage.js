@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import FilePreviewModal from './FilePreviewModal';
+import "./CloudPage.css";
+import NavigationBar from "./components/NavigationBar";
 
 
 function CloudPage() {
@@ -19,6 +21,8 @@ function CloudPage() {
   const [filePreviewUrl, setFilePreviewUrl] = useState(null);
   const [filePreviewType, setFilePreviewType] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
 
 
   // Wildcard controller
@@ -74,6 +78,7 @@ function CloudPage() {
         });
     }
   };
+
 
 
   useEffect(() => {
@@ -251,15 +256,15 @@ function CloudPage() {
 
   const handleRename = async (id, isFolder, newName) => {
     const token = localStorage.getItem("token");
-  
+
     const url = isFolder
       ? `http://localhost:8080/api/folder/${id}/rename`
       : `http://localhost:8080/api/file/${id}/rename`;
-  
+
     try {
       await axios.patch(url, null, {
         headers: { Authorization: `Bearer ${token}` },
-        params: {newName: newName }
+        params: { newName: newName }
       });
       loadData();
     } catch (err) {
@@ -267,7 +272,7 @@ function CloudPage() {
       console.error(err);
     }
   };
-  
+
 
 
   const renderFolderTree = (nodes) => (
@@ -294,227 +299,189 @@ function CloudPage() {
   }
 
   return (
-    <div style={{ display: "flex", maxWidth: "1000px", margin: "50px auto" }}>
-      <div style={{ flex: 1, paddingRight: "20px" }}>
-        <h2>Содержимое облака</h2>
+    <div className="cloud-page">
+      <NavigationBar />
 
-        <div style={{ marginBottom: "20px" }}>
-          <button
-            onClick={handleGoBack}
-            disabled={location.pathname === "/cloud" || location.pathname === "/cloud/"}
-            style={{
-              padding: "5px 10px",
-              backgroundColor:
-                location.pathname === "/cloud" || location.pathname === "/cloud/"
-                  ? "#ccc"
-                  : "#007bff",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor:
-                location.pathname === "/cloud" || location.pathname === "/cloud/"
-                  ? "not-allowed"
-                  : "pointer"
-            }}
-          >
-            ⬅ Назад
-          </button>
-        </div>
+      <div className="cloud-container">
+        <div className="cloud-main">
+          <h2>Содержимое облака</h2>
 
-        <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              display: "inline-block",
-              padding: "10px 15px",
-              backgroundColor: "#007bff",
-              color: "#fff",
-              borderRadius: "5px",
-              cursor: "pointer"
-            }}
-          >
-            {uploading ? "Загрузка..." : "Загрузить файл"}
-            <input
-              type="file"
-              style={{ display: "none" }}
-              onChange={handleFileUpload}
-              disabled={uploading}
-            />
-          </label>
-        </div>
-
-        <div style={{ marginBottom: "20px" }}>
           <input
             type="text"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            placeholder="Имя новой папки"
-            style={{ marginRight: "10px", padding: "5px" }}
+            placeholder="Поиск файлов и папок..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="cloud-search"
           />
-          <button onClick={handleFolderCreate} style={{ padding: "5px 10px" }}>
-            Создать папку
-          </button>
-        </div>
 
-        {data.length === 0 ? (
-          <p>Папка пуста.</p>
-        ) : (
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            {data.map(([id, path]) => {
-              const isFolder = path.endsWith("/");
-              const segments = path.split("/").filter(Boolean);
-              const name = segments[segments.length - 1] || "/";
-              const currentPath = location.pathname.endsWith("/") ? location.pathname : location.pathname + "/";
-
-              return (
-                <li
-                  key={id}
-                  style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                >
-                  <span
-                    onClick={() => {
-                      if (isFolder) {
-                        // Загрузка информации о папке
-                        navigate(`?folderId=${id}`);
-                        axios.get(`http://localhost:8080/api/folder/${id}`, {
-                          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                        })
-                          .then((res) => setFileInfo(res.data))
-                          .catch(() => setError("Ошибка при получении информации о папке."));
-                      } else {
-                        // Загрузка информации о файле
-                        navigate(`?fileId=${id}`);
-                      }
-                    }}
-                    onDoubleClick={() => {
-                      if (isFolder) {
-                        const newPath = (location.pathname.endsWith("/") ? location.pathname : location.pathname + "/") + name + "/";
-                        navigate(newPath);
-                      }
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      color: isFolder ? "#007bff" : "#333",
-                      flexGrow: 1,
-                      textDecoration: "underline"
-                    }}
-                  >
-                    {isFolder ? "📁 " : "📄 "}
-                    {name}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
-      {fileInfo && (
-        <div
-          style={{
-            flex: "0 0 300px",
-            borderLeft: "1px solid #ccc",
-            paddingLeft: "20px"
-          }}
-        >
-          <h3>{"fileSize" in fileInfo ? "Информация о файле" : "Информация о папке"}</h3>
-
-          <p><strong>Имя:</strong> {fileInfo.fileName || fileInfo.folderName}</p>
-          <p><strong>Путь:</strong> {fileInfo.filePath || fileInfo.folderPath}</p>
-          <p><strong>Дата создания:</strong> {new Date(fileInfo.uploadedAt).toLocaleString()}</p>
-
-          {"fileSize" in fileInfo && (
-            <p><strong>Размер:</strong> {fileInfo.fileSize}</p>
-          )}
-
-          <div style={{ marginTop: "10px" }}>
-            {"fileSize" in fileInfo && (
-              <>
-                <button onClick={handleDownload} style={{ marginRight: "10px" }}>
-                  Скачать файл
-                </button>
-                <button onClick={() => handleFilePreview(fileInfo.id)} style={{ marginRight: "10px" }}>
-                  Предпросмотр
-                </button>
-              </>
-            )}
+          <div className="cloud-controls">
             <button
-              onClick={() => {
-                const newName = prompt("Введите новое имя:");
-                if (newName) handleRename(fileInfo.id, "fileSize" in fileInfo ? false : true, newName);
-              }}
-              style={{ marginRight: "10px" }}
+              onClick={handleGoBack}
+              disabled={location.pathname === "/cloud" || location.pathname === "/cloud/"}
+              className="back-button"
             >
-              Переименовать
+              ⬅ Назад
             </button>
-            <button
-              onClick={() => {
-                setMoveTarget({ id: fileInfo.id, isFolder: !"fileSize" in fileInfo });
-                loadFolderTree();
-                setShowMoveModal(true);
-              }}
-              style={{ backgroundColor: "#17a2b8", color: "#fff", marginRight: "10px" }}
-            >
-              Переместить
-            </button>
-            <button
-              onClick={() => handleDelete(fileInfo.id, !"fileSize" in fileInfo)}
-              style={{
-                backgroundColor: "#dc3545",
-                color: "#fff"
-              }}
-            >
-              Удалить
-            </button>
+
+            <label className="upload-label">
+              {uploading ? "Загрузка..." : "Загрузить файл"}
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                hidden
+              />
+            </label>
+
+            <div className="folder-creator">
+              <input
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="Имя новой папки"
+              />
+              <button onClick={handleFolderCreate}>Создать папку</button>
+            </div>
           </div>
 
-          <FilePreviewModal
-            show={showPreviewModal}
-            onClose={closeButt}
-            filePreviewUrl={filePreviewUrl}
-            filePreviewType={filePreviewType}
-          />
+
+          {data.length === 0 ? (
+            <p>Папка пуста.</p>
+          ) : (
+            <ul className="file-list">
+              {data.map(([id, path]) => {
+                const isFolder = path.endsWith("/");
+                const segments = path.split("/").filter(Boolean);
+                const name = segments[segments.length - 1] || "/";
+                const currentPath = location.pathname.endsWith("/") ? location.pathname : location.pathname + "/";
+
+                return (
+                  <li key={id} className="file-item">
+                    <span
+                      onClick={() => {
+                        if (isFolder) {
+                          // Загрузка информации о папке
+                          navigate(`?folderId=${id}`);
+                          axios.get(`http://localhost:8080/api/folder/${id}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                          })
+                            .then((res) => setFileInfo(res.data))
+                            .catch(() => setError("Ошибка при получении информации о папке."));
+                        } else {
+                          // Загрузка информации о файле
+                          navigate(`?fileId=${id}`);
+                        }
+                      }}
+                      onDoubleClick={() => {
+                        if (isFolder) {
+                          const newPath = (location.pathname.endsWith("/") ? location.pathname : location.pathname + "/") + name + "/";
+                          navigate(newPath);
+                        }
+                      }}
+                      style={{
+                        cursor: "pointer",
+                        color: isFolder ? "#007bff" : "#333",
+                        flexGrow: 1,
+                        textDecoration: "underline"
+                      }}
+                    >
+                      {isFolder ? "📁 " : "📄 "}
+                      {name}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-      )}
+        {fileInfo && (
+          <div className="cloud-info-panel">
+            <h3>{"fileSize" in fileInfo ? "Информация о файле" : "Информация о папке"}</h3>
 
+            <p><strong>Имя:</strong> {fileInfo.fileName || fileInfo.folderName}</p>
+            <p><strong>Путь:</strong> {fileInfo.filePath || fileInfo.folderPath}</p>
+            <p><strong>Дата создания:</strong> {new Date(fileInfo.uploadedAt).toLocaleString()}</p>
 
+            {"fileSize" in fileInfo && (
+              <p><strong>Размер:</strong> {fileInfo.fileSize}</p>
+            )}
 
-      {showMoveModal && (
-        <div style={{
-          position: "fixed",
-          top: "0", left: "0", right: "0", bottom: "0",
-          backgroundColor: "rgba(0,0,0,0.5)",
-          display: "flex", justifyContent: "center", alignItems: "center",
-          zIndex: 999
-        }}>
-          <div style={{
-            backgroundColor: "#fff",
-            padding: "20px",
-            borderRadius: "8px",
-            maxHeight: "80vh",
-            overflowY: "auto",
-            width: "400px"
-          }}>
-            <h3>Выберите папку назначения</h3>
-            {renderFolderTree(folderTree)}
-            <div style={{ marginTop: "20px" }}>
+            <div className="action-buttons">
+              {"fileSize" in fileInfo && (
+                <>
+                  <button onClick={handleDownload} className="btn-download">
+                    Скачать файл
+                  </button>
+                  <button onClick={() => handleFilePreview(fileInfo.id)} className="btn-preview">
+                    Предпросмотр
+                  </button>
+                </>
+              )}
               <button
-                onClick={handleMove}
-                disabled={!selectedFolderId}
-                style={{ marginRight: "10px", padding: "6px 12px" }}
+                onClick={() => {
+                  const newName = prompt("Введите новое имя:");
+                  if (newName) handleRename(fileInfo.id, "fileSize" in fileInfo ? false : true, newName);
+                }}
+                className="btn-rename"
+              >
+                Переименовать
+              </button>
+              <button
+                onClick={() => {
+                  setMoveTarget({ id: fileInfo.id, isFolder: !"fileSize" in fileInfo });
+                  loadFolderTree();
+                  setShowMoveModal(true);
+                }}
+                className="btn-move"
               >
                 Переместить
               </button>
-              <button onClick={() => setShowMoveModal(false)} style={{ padding: "6px 12px" }}>
+              <button
+                onClick={() => handleDelete(fileInfo.id, !"fileSize" in fileInfo)}
+                className="btn-delete"
+              >
+                Удалить
+              </button>
+            </div>
+
+
+            <FilePreviewModal
+              show={showPreviewModal}
+              onClose={closeButt}
+              filePreviewUrl={filePreviewUrl}
+              filePreviewType={filePreviewType}
+            />
+          </div>
+
+        )}
+
+      </div>
+      {showMoveModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Выберите папку назначения</h3>
+            {renderFolderTree(folderTree)}
+            <div className="modal-buttons">
+              <button
+                onClick={handleMove}
+                disabled={!selectedFolderId}
+              >
+                Переместить
+              </button>
+              <button onClick={() => setShowMoveModal(false)}>
                 Отмена
               </button>
             </div>
           </div>
         </div>
       )}
-      {showPreviewModal}
 
-
-
+      <FilePreviewModal
+        show={showPreviewModal}
+        onClose={closeButt}
+        filePreviewUrl={filePreviewUrl}
+        filePreviewType={filePreviewType}
+      />
     </div>
   );
 }

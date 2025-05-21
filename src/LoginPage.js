@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import './LoginPage.css';
 
 function LoginPage() {
   const [email, setEmail] = useState(""); 
@@ -25,7 +26,7 @@ function LoginPage() {
         password,
       });
       localStorage.setItem("token", response.data.token);
-      navigate("/success");
+      navigate("/cloud");
     } catch (err) {
       setError("Ошибка входа. Проверьте логин и пароль.");
     }
@@ -36,32 +37,31 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ maxWidth: "300px", margin: "50px auto" }}>
-      <h2>Вход</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Логин"
-          value={email}  
-          onChange={(e) => setEmail(e.target.value)}  
-          required
-        />
-        <br />
-        <input
-          type="password"
-          placeholder="Пароль"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <br />
-        <button type="submit">Войти</button>
-      </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <hr />
-      <p>Нет аккаунта?</p>
-      <button onClick={goToRegister}>Зарегистрироваться</button>
+    <div className="login-background">
+      <div className="login-container">
+        <h2>Вход</h2>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Логин"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit">Войти</button>
+        </form>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <hr />
+        <p>Нет аккаунта?</p>
+        <button onClick={goToRegister}>Зарегистрироваться</button>
+      </div>
     </div>
   );
 }

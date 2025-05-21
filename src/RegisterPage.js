@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import './RegisterPage.css';
 
 function RegisterPage() {
   const [firstName, setFirstName] = useState("");
@@ -56,45 +57,44 @@ function RegisterPage() {
   };
 
   return (
-    <div style={{ maxWidth: "300px", margin: "50px auto" }}>
-      <h2>Регистрация</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Имя"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          required
-        />
-        <br />
-        <input
-          type="text"
-          placeholder="Фамилия"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          required
-        />
-        <br />
-        <input
-          type="text"
-          placeholder="Почта"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <br />
-        <input
-          type="password"
-          placeholder="Пароль (6–18 символов)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <br />
-        <button type="submit">Зарегистрироваться</button>
-      </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {success && <p style={{ color: "green" }}>{success}</p>}
+    <div className="register-background">
+      <div className="register-container">
+        <h2>Регистрация</h2>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Имя"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Фамилия"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Почта"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Пароль (6–18 символов)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit">Зарегистрироваться</button>
+        </form>
+
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {success && <p style={{ color: 'limegreen' }}>{success}</p>}
+      </div>
     </div>
   );
 }
