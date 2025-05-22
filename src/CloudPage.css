@@ -198,4 +198,19 @@
   .cloud-info-panel button:hover {
     filter: brightness(0.9);
   }
+  .clear-button {
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .clear-button:hover {
+    background-color: #e67e22;
+  }
+  
       

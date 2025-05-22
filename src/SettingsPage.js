@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import NavigationBar from './components/NavigationBar';
 import './SettingsPage.css';
+import { useNavigate } from "react-router-dom";
 
 function SettingsPage() {
   const [user, setUser] = useState(null);
@@ -12,6 +13,8 @@ function SettingsPage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -22,7 +25,7 @@ function SettingsPage() {
     }
 
     axios
-      .get("http://localhost:8080/api/settings", {
+      .get("http://localhost:8080/api/user", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -42,6 +45,11 @@ function SettingsPage() {
     setSaveMessage("");
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // если используется другой ключ — замени
+    navigate("/login");
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEditableUser({ ...editableUser, [name]: value });
@@ -53,6 +61,7 @@ function SettingsPage() {
   };
 
   const handlePasswordChange = async () => {
+    const token = localStorage.getItem("token");
     if (newPassword !== repeatPassword) {
       alert('Пароли не совпадают');
       return;
@@ -60,7 +69,7 @@ function SettingsPage() {
     try {
       const response = await fetch('http://localhost:8080/api/user/password', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers:  { Authorization: `Bearer ${token}` },
         body: JSON.stringify({ password: newPassword }),
       });
       if (response.ok) {
@@ -83,7 +92,7 @@ function SettingsPage() {
     const token = localStorage.getItem("token");
 
     axios
-      .put("http://localhost:8080/api/settings", editableUser, {
+      .put("http://localhost:8080/api/user/update", editableUser, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -132,12 +141,13 @@ function SettingsPage() {
             <p><strong>Используемое значение:</strong> {user.bucket ? user.bucket.size : "Error"}</p>
             <button onClick={handleEdit}>Редактировать</button>
             <button onClick={() => setShowPasswordModal(true)}>Изменить пароль</button>
+            <button className="logout-button" onClick={handleLogout}>Выйти</button>
           </>
         )}
-
+  
         {saveMessage && <div className="success-message">{saveMessage}</div>}
       </div>
-
+  
       {showPasswordModal && (
         <div className="modal-overlay">
           <div className="modal">

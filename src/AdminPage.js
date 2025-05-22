@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import NavigationBar from "./components/NavigationBar";
+import "./AdminPage.css";
 
 const AdminPage = () => {
   const [users, setUsers] = useState([]);
@@ -75,94 +77,82 @@ const AdminPage = () => {
   };
 
   if (loading) return <div>Загрузка...</div>;
-
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Пользователи</h2>
+    <div className="admin-page">
+      <NavigationBar />
 
-      {selectedUsers.length > 0 && (
-        <div style={{ marginBottom: '10px' }}>
-          <button onClick={() => performAction('delete')} style={{ marginRight: '10px' }}>
-            Удалить
-          </button>
-          <button onClick={() => performAction('admin')}>
-            Сделать администратором
-          </button>
+      <div className="glass-container">
+        <h2 className="section-title">Пользователи</h2>
+
+        {selectedUsers.length > 0 && (
+          <div className="action-buttons">
+            <button className="btn danger" onClick={() => performAction('delete')}>
+              Удалить
+            </button>
+            <button className="btn success" onClick={() => performAction('admin')}>
+              Сделать администратором
+            </button>
+          </div>
+        )}
+
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>ID</th>
+                <th>Имя</th>
+                <th>Фамилия</th>
+                <th>Почта</th>
+                <th>Бакет</th>
+                <th>Роль</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => toggleUserSelection(user.id)}
+                    />
+                  </td>
+                  <td>{user.id}</td>
+                  <td>{user.firstName}</td>
+                  <td>{user.lastName}</td>
+                  <td>{user.email}</td>
+                  <td>{user.bucket?.name || '—'}</td>
+                  <td>{user.role}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
 
-      <div
-        style={{
-          maxHeight: '200px',
-          overflowY: 'scroll',
-          border: '1px solid #ccc',
-          marginBottom: '30px',
-          padding: '10px',
-        }}
-      >
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>ID</th>
-              <th>Имя</th>
-              <th>Фамилия</th>
-              <th>Почта</th>
-              <th>Бакет</th>
-              <th>Роль</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.includes(user.id)}
-                    onChange={() => toggleUserSelection(user.id)}
-                  />
-                </td>
-                <td>{user.id}</td>
-                <td>{user.firstName}</td>
-                <td>{user.lastName}</td>
-                <td>{user.email}</td>
-                <td>{user.bucket?.name || '—'}</td>
-                <td>{user.role}</td>
+        <h2 className="section-title">Бакеты</h2>
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Размер</th>
+                <th>ID пользователя</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <h2>Бакеты</h2>
-      <div
-        style={{
-          maxHeight: '200px',
-          overflowY: 'scroll',
-          border: '1px solid #ccc',
-          padding: '10px',
-        }}
-      >
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Название</th>
-              <th>Размер</th>
-              <th>ID пользователя</th>
-            </tr>
-          </thead>
-          <tbody>
-            {buckets.map((bucket) => (
-              <tr key={bucket.id}>
-                <td>{bucket.id}</td>
-                <td>{bucket.name}</td>
-                <td>{bucket.size}</td>
-                <td>{bucket.userId}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {buckets.map((bucket) => (
+                <tr key={bucket.id}>
+                  <td>{bucket.id}</td>
+                  <td>{bucket.name}</td>
+                  <td>{bucket.size}</td>
+                  <td>{bucket.userId}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -273,6 +273,32 @@ function CloudPage() {
     }
   };
 
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+
+    axios.get(`http://localhost:8080/api/file`, {
+      params: { search: searchQuery },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+      .then((res) => {
+        // if (res.data && Array.isArray(res.data)) {
+        //   setData(Object.entries(res.data));
+        //   setFileInfo(null); // заменить текущий список файлов на результат поиска
+        // } else {
+        //   setError("Некорректный ответ от сервера");
+        // }
+        setData(Object.entries(res.data));
+        setFileInfo(null);
+      })
+      .catch((err) => {
+        setError("Ошибка при поиске файлов");
+        console.error(err);
+      });
+  };
+
+
 
 
   const renderFolderTree = (nodes) => (
@@ -304,6 +330,13 @@ function CloudPage() {
 
       <div className="cloud-container">
         <div className="cloud-main">
+        <button
+              onClick={handleGoBack}
+              disabled={location.pathname === "/cloud" || location.pathname === "/cloud/"}
+              className="back-button"
+            >
+              ⬅ Назад
+            </button>
           <h2>Содержимое облака</h2>
 
           <input
@@ -315,13 +348,22 @@ function CloudPage() {
           />
 
           <div className="cloud-controls">
-            <button
-              onClick={handleGoBack}
-              disabled={location.pathname === "/cloud" || location.pathname === "/cloud/"}
-              className="back-button"
-            >
-              ⬅ Назад
+            
+
+            <button onClick={handleSearch} className="back-button">
+              🔍 Найти
             </button>
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                navigate("/cloud");
+                setFileInfo(null);
+              }}
+              className="clear-button"
+            >
+              ❌ Очистить поиск
+            </button>
+
 
             <label className="upload-label">
               {uploading ? "Загрузка..." : "Загрузить файл"}
