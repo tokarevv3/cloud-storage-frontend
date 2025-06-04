@@ -126,9 +126,7 @@ function CloudPage() {
       setUploading(true);
       await axios.post(`http://localhost:8080/api${subPath}`, formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+          Authorization: `Bearer ${token}`,        },
       });
       loadData();
     } catch (err) {
@@ -157,6 +155,25 @@ function CloudPage() {
       console.error(err);
     }
   };
+
+  const formatFileSize = (sizeInBytes) => {
+  if (sizeInBytes === undefined || sizeInBytes === null) return "";
+
+  const kb = 1024;
+  const mb = kb * 1024;
+  const gb = mb * 1024;
+
+  if (sizeInBytes < kb) {
+    return sizeInBytes + " Б"; // байты
+  } else if (sizeInBytes < mb) {
+    return (sizeInBytes / kb).toFixed(2) + " КБ";
+  } else if (sizeInBytes < gb) {
+    return (sizeInBytes / mb).toFixed(2) + " МБ";
+  } else {
+    return (sizeInBytes / gb).toFixed(2) + " ГБ";
+  }
+};
+
 
 
   const handleDownload = () => {
@@ -445,7 +462,7 @@ function CloudPage() {
             <p><strong>Дата создания:</strong> {new Date(fileInfo.uploadedAt).toLocaleString()}</p>
 
             {"fileSize" in fileInfo && (
-              <p><strong>Размер:</strong> {fileInfo.fileSize}</p>
+              <p><strong>Размер:</strong> {formatFileSize(fileInfo.fileSize)}</p>
             )}
 
             <div className="action-buttons">

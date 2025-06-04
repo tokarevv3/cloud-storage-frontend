@@ -50,7 +50,7 @@ function RegisterPage() {
       });
       localStorage.setItem("token", response.data.token);
       setSuccess("Регистрация прошла успешно!");
-      setTimeout(() => navigate("/success"), 2000);
+      setTimeout(() => navigate("/cloud"), 2000);
     } catch (err) {
       setError("Ошибка регистрации. Возможно, логин уже занят.");
     }

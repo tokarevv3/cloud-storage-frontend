@@ -13,7 +13,7 @@ function LoginPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      navigate("/success");
+      navigate("/cloud");
     }
   }, [navigate]);
 

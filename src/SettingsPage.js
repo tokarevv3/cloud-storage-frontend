@@ -50,6 +50,25 @@ function SettingsPage() {
     navigate("/login");
   };
 
+  // Внутри SettingsPage компонента (например, сразу после импортов или внутри компонента)
+function formatSize(bytes) {
+  if (bytes == null || isNaN(bytes)) return "—";
+
+  const kB = bytes / 1024;
+  if (kB < 1024) {
+    return `${kB.toFixed(2)} КБ`;
+  }
+
+  const MB = kB / 1024;
+  if (MB < 1024) {
+    return `${MB.toFixed(2)} МБ`;
+  }
+
+  const GB = MB / 1024;
+  return `${GB.toFixed(2)} ГБ`;
+}
+
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEditableUser({ ...editableUser, [name]: value });
@@ -138,7 +157,7 @@ function SettingsPage() {
             <p><strong>Имя:</strong> {user.firstName}</p>
             <p><strong>Фамилия:</strong> {user.lastName}</p>
             <p><strong>Почта:</strong> {user.email}</p>
-            <p><strong>Используемое значение:</strong> {user.bucket ? user.bucket.size : "Error"}</p>
+            <p><strong>Используемое значение:</strong> {formatSize(user.bucket?.size)}</p>
             <button onClick={handleEdit}>Редактировать</button>
             <button onClick={() => setShowPasswordModal(true)}>Изменить пароль</button>
             <button className="logout-button" onClick={handleLogout}>Выйти</button>

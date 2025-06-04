@@ -9,18 +9,20 @@ const AdminPage = () => {
   const [buckets, setBuckets] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLimitEnabled, setIsLimitEnabled] = useState(false);
+  const [capacityValue, setCapacityValue] = useState(10);
   const navigate = useNavigate();
 
+  const token = localStorage.getItem('token');
+
+  const api = axios.create({
+    baseURL: 'http://localhost:8080/api/admin',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-
-    const api = axios.create({
-      baseURL: 'http://localhost:8080/api/admin',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
     api.interceptors.response.use(
       (response) => response,
       (error) => {
@@ -48,14 +50,6 @@ const AdminPage = () => {
   };
 
   const performAction = async (action) => {
-    const token = localStorage.getItem('token');
-    const api = axios.create({
-      baseURL: 'http://localhost:8080/api/admin',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
     try {
       await Promise.all(
         selectedUsers.map((userId) => {
@@ -76,7 +70,32 @@ const AdminPage = () => {
     }
   };
 
+  const handleToggleLimit = async () => {
+    const newValue = !isLimitEnabled;
+    setIsLimitEnabled(newValue);
+    try {
+      await api.patch('/capacity', null, {
+        params: { toggle: newValue },
+      });
+    } catch (error) {
+      console.error('Ошибка при переключении ограничения:', error);
+    }
+  };
+
+  const handleCapacityChange = async (e) => {
+    const newCapacity = parseInt(e.target.value, 10);
+    setCapacityValue(newCapacity);
+    try {
+      await api.post('/capacity', null, {
+        params: { capacity: newCapacity },
+      });
+    } catch (error) {
+      console.error('Ошибка при установке значения ограничения:', error);
+    }
+  };
+
   if (loading) return <div>Загрузка...</div>;
+
   return (
     <div className="admin-page">
       <NavigationBar />
@@ -152,6 +171,32 @@ const AdminPage = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="capacity-settings">
+          <label>
+            <input
+              type="checkbox"
+              checked={isLimitEnabled}
+              onChange={handleToggleLimit}
+            />
+            Включить ограничение хранилища
+          </label>
+
+          {isLimitEnabled && (
+            <div className="slider-container">
+              <label>
+                Ограничение: {capacityValue} ГБ
+                <input
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={capacityValue}
+                  onChange={handleCapacityChange}
+                />
+              </label>
+            </div>
+          )}
         </div>
       </div>
     </div>
